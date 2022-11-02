@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: liqo-fixed-resources-plugin
+  labels:
+      app.kubernetes.io/name: liqo-resource-plugins
+      app.kubernetes.io/instance: external-monitor-fixed-resources
+      app.kubernetes.io/component: plugin
+      app.kubernetes.io/part-of: liqo
+      app.kubernetes.io/managed-by: manual
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: liqo-resource-plugins
+      app.kubernetes.io/instance: external-monitor-fixed-resources
+      app.kubernetes.io/component: plugin
+      app.kubernetes.io/part-of: liqo
+      app.kubernetes.io/managed-by: manual
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: liqo-resource-plugins
+        app.kubernetes.io/instance: external-monitor-fixed-resources
+        app.kubernetes.io/component: plugin
+        app.kubernetes.io/part-of: liqo
+        app.kubernetes.io/managed-by: manual
+    spec:
+      containers:
+      - name: external-monitor-container
+        image: lucarocco97/liqo-fixed-resources-plugin:latest
+        imagePullPolicy: Always
+        ports:
+        - name: grpc-api
+          containerPort: 6001
+        args:
+        - --resource=cpu=2000m
+        - --resource=memory=2G
+        - --resource=pods=10
