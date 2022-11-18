@@ -1,0 +1,109 @@
+name: Integration Pipeline
+on:
+  push:
+    tags:
+    - 'v*'
+    branches:
+      - main
+  pull_request:
+    types:
+    - opened
+    - reopened
+    - synchronize
+
+jobs:
+  configure:
+    name: Preliminary configuration
+    runs-on: ubuntu-latest
+    outputs:
+      commit-ref: ${{ steps.configure.outputs.commit-ref }}
+      architectures: ${{ steps.configure.outputs.architectures }}
+
+    steps:
+    - name: Get the version
+      id: get_version
+      run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+      if: startsWith(github.ref, 'refs/tags/v')
+
+    - name: Configure
+      id: configure
+      run: |
+        if [ "${{ steps.get_version.outputs.VERSION }}" != "" ]; then
+          echo "architectures=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+          echo "commit-ref=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "architectures=linux/amd64">> $GITHUB_OUTPUT
+          echo "commit-ref=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+        else
+          echo "architectures=linux/amd64,linux/arm64">> $GITHUB_OUTPUT
+          echo "commit-ref=${{ github.sha }}">> $GITHUB_OUTPUT
+        fi
+
+  build:
+    runs-on: ubuntu-latest
+    needs: configure
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin:
+        - fixed-resources
+
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2.1.0
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          ref: "${{ needs.configure.outputs.commit-ref }}"
+          persist-credentials: false
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-${{ matrix.plugin }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.plugin }}-buildx-
+
+      - name: Login to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: CheckPRNumber
+        run: |
+          echo "push-image from build: ${{ needs.configure.outputs.push-image }}"
+          echo "commit-ref: ${{ needs.configure.outputs.commit-ref }}"
+
+      - name: Build (and Publish) ${{ matrix.plugin }} image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: ${{ needs.configure.outputs.architectures }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.plugin }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.plugin }}:${{ needs.configure.outputs.commit-ref }}
+          push: ${{ github.event_name != 'pull_request' }}
+          file: build/common/Dockerfile
+          build-args: |
+            PLUGIN=${{ matrix.plugin }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+        # This ugly bit is necessary if you don't want your cache to grow forever
+        # till it hits GitHub's limit of 5GB.
+        # Temp fix
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
