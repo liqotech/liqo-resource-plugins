@@ -41,7 +41,7 @@ Now that you've deployed the plugin you should configure Liqo to use it.
 You can use again the installation command with an extra flag:
 
 ```bash
-liqoctl install ... --set controllerManager.config.externalMonitorAddress=liqo-fixed-resources-plugin.liqo:6001
+liqoctl install ... --set controllerManager.config.resourcePluginAddress=liqo-fixed-resources-plugin.liqo:6001
 ```
 
 You may need to update resource offers only if the variation of resources is significant for you.

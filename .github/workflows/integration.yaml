@@ -78,11 +78,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: CheckPRNumber
-        run: |
-          echo "push-image from build: ${{ needs.configure.outputs.push-image }}"
-          echo "commit-ref: ${{ needs.configure.outputs.commit-ref }}"
-
       - name: Build (and Publish) ${{ matrix.plugin }} image
         uses: docker/build-push-action@v3
         with:
