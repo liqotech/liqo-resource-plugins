@@ -1,11 +1,11 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"time"
 
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -15,24 +15,35 @@ import (
 
 func main() {
 	var port int
-	var nodesToIgnore []string
+	var selector string
+	var resyncPeriod time.Duration
+	var nodeSelector labels.Selector
+	var includeVirtualNodes bool
 
 	var rootCmd = &cobra.Command{
 		Use:          os.Args[0],
-		Short:        "Liqo plugin which provides fixed resources to each remote cluster",
+		Short:        "Liqo plugin which devides the available resource among peered clusters",
 		SilenceUsage: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			var err error
+			if nodeSelector, err = labels.Parse(selector); err != nil {
+				return err
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			resyncPeriod := flag.Duration("resync-period", 10*time.Hour, "The resync period for the informers")
 			config := restcfg.SetRateLimiter(ctrl.GetConfigOrDie())
 			clientset := kubernetes.NewForConfigOrDie(config)
 
-			return grpcserver.ListenAndServeGRPCServer(port, clientset, *resyncPeriod, nodesToIgnore)
+			return grpcserver.ListenAndServeGRPCServer(port, clientset, resyncPeriod, nodeSelector, includeVirtualNodes)
 		},
 	}
 
+	rootCmd.PersistentFlags().BoolVar(&includeVirtualNodes, "include-virtual-nodes", false,
+		"if true resources of virtual nodes are considered, otherwise ignored")
+	rootCmd.PersistentFlags().DurationVar(&resyncPeriod, "resync-period", 10*time.Hour, "the resync period for the informers")
 	rootCmd.PersistentFlags().IntVar(&port, "port", 6001, "set port where the server will listen on.")
-	rootCmd.PersistentFlags().StringSliceVar(&nodesToIgnore, "ignore-node",
-		make([]string, 0), "node's name to ignore. You can use this flag multiple times.")
+	rootCmd.PersistentFlags().StringVar(&selector, "selector", "", "the selector to filter nodes. This flag can be used multiple times.")
 
 	err := rootCmd.Execute()
 	if err != nil {
