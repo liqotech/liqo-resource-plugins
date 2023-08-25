@@ -61,10 +61,10 @@ func ListenAndServeGRPCServer(port int, resources map[string]*resource.Quantity)
 // ReadResources receives a clusterID and returns the resources for that specific clusterID. In this version of the resource plugin
 // the clusterID is ignored and the same resources are returned for every clusterID received. Since this method could be called multiple
 // times it has to be idempotent.
-func (a *server) ReadResources(ctx context.Context, req *resourcemonitors.ClusterIdentity) (*resourcemonitors.ResourceList, error) {
+func (a *server) ReadResources(ctx context.Context, req *resourcemonitors.ClusterIdentity) (*resourcemonitors.PoolResourceList, error) {
 	log.Printf("info: reading resources for cluster %s", req.ClusterID)
-	response := resourcemonitors.ResourceList{Resources: a.resources}
-
+	resourceList := []*resourcemonitors.ResourceList{{Resources: a.resources}}
+	response := resourcemonitors.PoolResourceList{ResourceLists: resourceList}
 	return &response, nil
 }
 
