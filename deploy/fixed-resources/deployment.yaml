@@ -28,12 +28,19 @@ spec:
     spec:
       containers:
       - name: external-monitor-container
-        image: lucarocco97/liqo-fixed-resources-plugin:latest
+        image: ghcr.io/liqotech/fixed-resources:latest
         imagePullPolicy: Always
         ports:
-        - name: grpc-api
-          containerPort: 6001
+          - name: grpc-api
+            containerPort: 6001
         args:
-        - --resource=cpu=2000m
-        - --resource=memory=2G
-        - --resource=pods=10
+          - --resource=cpu=2000m
+          - --resource=memory=2G
+          - --resource=pods=10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
