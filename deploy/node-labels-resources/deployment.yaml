@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: liqo-node-labels-resources-plugin
+  labels:
+      app.kubernetes.io/name: liqo-node-labelsresource-plugins
+      app.kubernetes.io/instance: external-monitor-node-labels-resources
+      app.kubernetes.io/component: plugin
+      app.kubernetes.io/part-of: liqo
+      app.kubernetes.io/managed-by: manual
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: liqo-resource-plugins
+      app.kubernetes.io/instance: external-monitor-node-labels-resources
+      app.kubernetes.io/component: plugin
+      app.kubernetes.io/part-of: liqo
+      app.kubernetes.io/managed-by: manual
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: liqo-resource-plugins
+        app.kubernetes.io/instance: external-monitor-node-labels-resources
+        app.kubernetes.io/component: plugin
+        app.kubernetes.io/part-of: liqo
+        app.kubernetes.io/managed-by: manual
+    spec:
+      serviceAccount: liqo-node-labels-resource-plugin-sa
+      containers:
+      - name: external-monitor-container
+        image: 
+        imagePullPolicy: Always
+        ports:
+        - name: grpc-api
+          containerPort: 6001
+        args:
+        - --node-label=dedicated=liqo
+        - -v=4
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}

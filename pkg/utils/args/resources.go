@@ -78,3 +78,54 @@ func parseQuantity(str string) (string, *resource.Quantity, error) {
 
 	return res[0], &quantity, nil
 }
+
+// NodeLabelsMap contains labels.
+type NodeLabelsMap struct {
+	StringValues liqoargs.StringList
+	NodeLabels   map[string]string
+}
+
+// Set function sets the label.
+func (n *NodeLabelsMap) Set(str string) error {
+	if n.NodeLabels == nil {
+		n.NodeLabels = make(map[string]string)
+	}
+
+	if err := n.StringValues.Set(str); err != nil {
+		return err
+	}
+
+	for _, entry := range n.StringValues.StringList {
+		key, value, err := parseNodeLabel(entry)
+		if err != nil {
+			return err
+		}
+		n.NodeLabels[key] = value
+	}
+
+	return nil
+}
+
+// String returns the stringified map entries.
+func (n *NodeLabelsMap) String() string {
+	return n.StringValues.String()
+}
+
+// Type return the type name.
+func (n *NodeLabelsMap) Type() string {
+	return "nodeLabelList"
+}
+
+func parseNodeLabel(str string) (labelKey, labelValue string, err error) {
+	res := strings.Split(str, "=")
+
+	if len(res) != 2 {
+		return "", "", fmt.Errorf("invalid node label format %s", str)
+	}
+
+	if res[0] == "" || res[1] == "" {
+		return "", "", fmt.Errorf("invalid node label format %s", str)
+	}
+
+	return res[0], res[1], nil
+}
