@@ -1,4 +1,4 @@
-FROM golang:1.19 AS builder
+FROM golang:1.21 AS builder
 RUN mkdir /project
 WORKDIR /project
 
@@ -12,7 +12,7 @@ RUN test -n "$PLUGIN" || ( echo "Plugin not specified. Aborting" && false )
 COPY . ./
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=$(go env GOARCH) go build -ldflags="-s -w" ./cmd/$PLUGIN
 
-FROM alpine:3.15
+FROM alpine:3.19
 
 ARG PLUGIN
 

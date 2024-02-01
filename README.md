@@ -71,7 +71,7 @@ Existing plugins within this repo provide an example about the implementation of
 If you've done everything correctly you will be able to build your plugin and deploy it. To build your plugin you need to create a docker image by running the following command:
 
 ```bash
-docker build -f ./build/common/Dockerfile -t <IMAGE_NAME>:<TAG> --build-arg <PLUGIN_NAME> .
+docker build -f ./build/common/Dockerfile -t <IMAGE_NAME>:<TAG> --build-arg PLUGIN=<PLUGIN_NAME> .
 ```
 
 You must replace `<PLUGIN_NAME>` with the name of the folders that you've created during the plugin's scaffolding.
