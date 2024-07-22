@@ -1,5 +1,11 @@
 # Liqo resource plugins
 
+⚠️ This Project is Deprecated ⚠️
+
+Please note: This repository is no longer actively maintained and is considered deprecated. We encourage you to explore alternative solutions or repositories that are actively developed.
+
+------
+
 This repository contains resource plugins that you can use to customize the amount of resources that [Liqo](https://github.com/liqotech/liqo) offers to each foreign cluster.
 You can either use the plugin that fits your use case or decide to start from an existing one and extend/modify it according to your needs. **Resource plugins are supported in Liqo v0.6.0 and above**.
 
